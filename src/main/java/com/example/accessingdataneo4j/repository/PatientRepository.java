@@ -9,5 +9,7 @@ import java.util.Optional;
 @Repository
 public interface PatientRepository extends Neo4jRepository<Patient, String> {
 
+    Optional<Patient> findByNameAndFamilyId(String name, String familyId);
+
     Optional<Patient> findByNameAndFamilyIdAndStudyId(String name, String familyId, String studyId);
 }

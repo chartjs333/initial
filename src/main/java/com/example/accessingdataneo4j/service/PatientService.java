@@ -1,5 +1,7 @@
 package com.example.accessingdataneo4j.service;
 
+import com.example.accessingdataneo4j.GenericExcelReader;
+import com.example.accessingdataneo4j.PatientColumnMapping;
 import com.example.accessingdataneo4j.domain.Patient;
 import com.example.accessingdataneo4j.domain.Family;
 import com.example.accessingdataneo4j.domain.Study;
@@ -11,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,33 +34,59 @@ public class PatientService {
     @Autowired
     private StudyRepository studyRepository;
 
-    @Transactional
-    public void savePatient(Patient patient, String familyId, String studyId) {
+    private File excelFile;
+
+    public void setExcelFile(File excelFile) {
+        this.excelFile = excelFile;
+    }
+
+    public void execute() {
+        try {
+            // Create a reader for the Excel file
+            GenericExcelReader<Patient> excelReader = new GenericExcelReader<>(
+                    excelFile.getAbsolutePath(),
+                    Patient.class,
+                    new PatientColumnMapping()
+            );
+
+            // Read the data from the Excel file
+            List<Patient> patients = excelReader.readData();
+            for (Patient patient : patients) {
+                String patientName = patient.getName();
+                if (StringUtils.isEmpty(patientName)) {
+                    continue;
+                }
+                String familyId = patient.getFamily().getId();
+                String studyId = patient.getStudy().getId();
+
+                // Ensure that the family and study are already present
+                Optional<Family> family = familyRepository.findById(familyId);
+                Optional<Study> study = studyRepository.findById(studyId);
+                if (family.isPresent() && study.isPresent()) {
+                    patient.setFamily(family.get());
+                    patient.setStudy(study.get());
+                    savePatient(patient);
+                } else {
+                    log.error("Family or Study not found: Family ID=" + familyId + ", Study ID=" + studyId);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error processing the Excel file: " + excelFile.getAbsolutePath(), e);
+        }
+    }
+
+
+    public void savePatient(Patient patient) {
         // Установка текущего времени для createdAt и updatedAt
         LocalDateTime now = LocalDateTime.now();
         patient.setCreatedAt(now);
         patient.setUpdatedAt(now);
 
-        // Установка отношений с Family
-        Optional<Family> familyOptional = familyRepository.findById(familyId);
-        if (familyOptional.isPresent()) {
-            patient.setFamily(familyOptional.get());
-        } else {
-            log.warn("Family with ID " + familyId + " not found");
-        }
-
-        // Установка отношений с Study
-        Optional<Study> studyOptional = studyRepository.findById(studyId);
-        if (studyOptional.isPresent()) {
-            patient.setStudy(studyOptional.get());
-        } else {
-            log.warn("Study with ID " + studyId + " not found");
-        }
-
-        // Проверка уникальности пациента
-        Optional<Patient> existingPatient = patientRepository.findByNameAndFamilyIdAndStudyId(patient.getName(), familyId, studyId);
+        // Проверка уникальности пациента внутри семьи
+        Optional<Patient> existingPatient = patientRepository.findByNameAndFamilyId(patient.getName(), patient.getFamily().getId());
         if (existingPatient.isPresent()) {
-            log.warn("Patient with name " + patient.getName() + " already exists in family " + familyId + " and study " + studyId);
+            log.warn("Patient with name " + patient.getName() + " already exists in family " + patient.getFamily().getId());
             return;
         }
 

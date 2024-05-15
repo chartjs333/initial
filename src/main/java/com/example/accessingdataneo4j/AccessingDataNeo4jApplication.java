@@ -5,8 +5,13 @@ import java.util.List;
 
 import com.example.accessingdataneo4j.repository.StudyRepository;
 import com.example.accessingdataneo4j.service.DiseaseService;
+import com.example.accessingdataneo4j.service.FamilyService;
+import com.example.accessingdataneo4j.service.PatientService;
+import com.example.accessingdataneo4j.service.StudyService;
 import com.example.accessingdataneo4j.repository.DiseaseRepository;
 import com.example.accessingdataneo4j.repository.FileUploadRepository;
+import com.example.accessingdataneo4j.repository.FamilyRepository;
+import com.example.accessingdataneo4j.repository.PatientRepository;
 import com.example.accessingdataneo4j.service.StudyService;
 import com.example.accessingdataneo4j.utils.FileUtils;
 import org.slf4j.Logger;
@@ -35,6 +40,12 @@ public class AccessingDataNeo4jApplication {
 	@Autowired
 	private StudyService studyService;
 
+    @Autowired
+    private FamilyService familyService;
+
+    @Autowired
+    private PatientService patientService;
+
 	@Autowired
 	private DiseaseRepository diseaseRepository;
 
@@ -44,17 +55,24 @@ public class AccessingDataNeo4jApplication {
 	@Autowired
 	private StudyRepository studyRepository;
 
-	public static void main(String[] args) throws Exception {
-		SpringApplication.run(AccessingDataNeo4jApplication.class, args);
-		System.exit(0);
-	}
+    @Autowired
+    private FamilyRepository familyRepository;
 
+    @Autowired
+    private PatientRepository patientRepository;
+
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(AccessingDataNeo4jApplication.class, args);
+        System.exit(0);
+    }
 	@Bean
     CommandLineRunner initData(ResourceLoader resourceLoader) {
 		return args -> {
 			diseaseRepository.deleteAll();
 			fileUploadRepository.deleteAll();
             studyRepository.deleteAll();
+            familyRepository.deleteAll();
+            patientRepository.deleteAll();
 
 			// Define the directory containing the Excel files
 			File directory = new File(excelDirectoryPath);
@@ -84,6 +102,20 @@ public class AccessingDataNeo4jApplication {
                 studyService.setExcelFile(excelFile);
                 studyService.execute();
             }
-		};
+
+            // Process family data
+            for (File excelFile : excelFiles) {
+                log.info("Processing Excel file for families: " + excelFile.getAbsolutePath());
+                familyService.setExcelFile(excelFile);
+                familyService.execute();
+            }
+
+            // Process patient data
+            for (File excelFile : excelFiles) {
+                log.info("Processing Excel file for patients: " + excelFile.getAbsolutePath());
+                patientService.setExcelFile(excelFile);
+                patientService.execute();
+            }
+        };
 	}
 }

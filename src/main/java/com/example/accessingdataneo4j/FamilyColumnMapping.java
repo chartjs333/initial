@@ -7,7 +7,7 @@ public class FamilyColumnMapping implements ColumnMapping {
     @Override
     public Map<String, String> getColumnPropertyMapping() {
         Map<String, String> mapping = new HashMap<>();
-        mapping.put("family_ID", "name");  // Имя семьи
+        mapping.put("family_ID", "id");  // Имя семьи
         mapping.put("famhx", "history");
         mapping.put("num_het_mut_affected", "numHetMutAffected");
         mapping.put("num_hom_mut_affected", "numHomMutAffected");

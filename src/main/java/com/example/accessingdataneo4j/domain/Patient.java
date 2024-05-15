@@ -10,6 +10,7 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 public class Patient {
 
     @Id
+    private String uuid;
     private String id;
     private String name;
     private LocalDateTime createdAt;

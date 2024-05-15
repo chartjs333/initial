@@ -11,6 +11,7 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -20,6 +21,7 @@ import java.util.Set;
 public class Family {
 
     @Id
+    private String uuid;
     private String id;
     private String name;
     private Boolean history;

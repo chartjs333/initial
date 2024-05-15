@@ -8,7 +8,6 @@ import com.example.accessingdataneo4j.repository.FamilyRepository;
 import com.example.accessingdataneo4j.repository.StudyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -47,8 +46,8 @@ public class FamilyService {
             // Read the data from the Excel file
             List<Family> families = excelReader.readData();
             for (Family family : families) {
-                String familyName = family.getName();
-                if (StringUtils.isEmpty(familyName)) {
+                String familyId = family.getId();
+                if (StringUtils.isEmpty(familyId)) {
                     continue;
                 }
                 String studyId = family.getStudy().getId();
@@ -73,14 +72,14 @@ public class FamilyService {
         family.setStudy(family.getStudy());
 
         // Check if Family already exists within the context of the study
-        Family existingFamily = familyRepository.findByNameAndStudyId(family.getName(), family.getStudy().getId());
+        Family existingFamily = familyRepository.findByIdAndStudyId(family.getId(), family.getStudy().getId());
         if (existingFamily == null) {
             family.setCreatedAt(LocalDateTime.now());
             family.setUpdatedAt(LocalDateTime.now());
             familyRepository.save(family);
-            log.info("Family created: " + family.getName() + " and associated with study " + family.getStudy().getId());
+            log.info("Family created: " + family.getId() + " and associated with study " + family.getStudy().getId());
         } else {
-            log.info("Family already exists: " + family.getName() + " in study " + family.getStudy().getId());
+            log.info("Family already exists: " + family.getId() + " in study " + family.getStudy().getId());
         }
     }
 }

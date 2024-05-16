@@ -68,10 +68,7 @@ public class FamilyService {
     }
 
     private void processAndStoreFamily(Family family) {
-        // Ensure the family is unique within the context of the study
-        family.setStudy(family.getStudy());
-
-        // Check if Family already exists within the context of the study
+       // Check if Family already exists within the context of the study
         Family existingFamily = familyRepository.findByIdAndStudyId(family.getId(), family.getStudy().getId());
         if (existingFamily == null) {
             family.setCreatedAt(LocalDateTime.now());

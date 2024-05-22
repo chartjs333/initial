@@ -103,10 +103,26 @@ public class GenericExcelReader<T> {
                 method.invoke(currentObject, nextObject);
                 currentObject = nextObject;
             } else {
+                if (Set.class.isAssignableFrom(method.getParameterTypes()[0])) {
+                    addToSet(currentObject, method, value);
+                } else {
                 Object paramValue = convertValue(method.getParameters()[0].getType(), value);
                 method.invoke(currentObject, paramValue);
             }
         }
+    }
+    }
+
+    private void addToSet(Object currentObject, Method method, String value) throws Exception {
+        Class<?> nestedClass = method.getParameterTypes()[0];
+        Method getMethod = findMethod(currentObject.getClass(), "get" + method.getName().substring(3));
+        Set<Object> set = (Set<Object>) getMethod.invoke(currentObject);
+        if (set == null) {
+            set = new HashSet<>();
+            method.invoke(currentObject, set);
+        }
+        Object nestedObject = convertValue(nestedClass, value);
+        set.add(nestedObject);
     }
 
     private Object getNestedObject(Object currentObject, Method method) throws Exception {

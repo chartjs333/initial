@@ -38,5 +38,5 @@ public class Family {
     private Set<Patient> patients;
 
     @Relationship(type = "STUDY_FOR", direction = Relationship.Direction.INCOMING)
-    private Study study;
+    private Set<Study> studies;
 }

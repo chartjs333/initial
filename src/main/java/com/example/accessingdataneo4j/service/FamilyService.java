@@ -16,6 +16,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class FamilyService {
@@ -50,16 +51,17 @@ public class FamilyService {
                 if (StringUtils.isEmpty(familyId)) {
                     continue;
                 }
-                String studyId = family.getStudy().getId();
-
-                // Ensure that the study is already present
-                Optional<Study> study = studyRepository.findById(studyId);
-                if (study.isPresent()) {
-                    family.setStudy(study.get());
+                Set<Study> studies = family.getStudies();
+                    for (Study study : studies) {
+                        Optional<Study> existingStudy = studyRepository.findById(study.getId());
+                        if (existingStudy.isPresent()) {
+                        family.getStudies().remove(study);
+                        family.getStudies().add(existingStudy.get());
+                        } else {
+                            log.error("Study not found: Study ID=" + study.getId());
+                        }
+                    }
                     processAndStoreFamily(family);
-                } else {
-                    log.error("Study not found: Study ID=" + studyId);
-                }
             }
 
         } catch (Exception e) {
@@ -68,15 +70,16 @@ public class FamilyService {
     }
 
     private void processAndStoreFamily(Family family) {
-       // Check if Family already exists within the context of the study
-        Family existingFamily = familyRepository.findByIdAndStudyId(family.getId(), family.getStudy().getId());
-        if (existingFamily == null) {
-            family.setCreatedAt(LocalDateTime.now());
-            family.setUpdatedAt(LocalDateTime.now());
-            familyRepository.save(family);
-            log.info("Family created: " + family.getId() + " and associated with study " + family.getStudy().getId());
-        } else {
-            log.info("Family already exists: " + family.getId() + " in study " + family.getStudy().getId());
+        for (Study study : family.getStudies()) {
+            Family existingFamily = familyRepository.findByIdAndStudyId(family.getId(), study.getId());
+            if (existingFamily == null) {
+                family.setCreatedAt(LocalDateTime.now());
+                family.setUpdatedAt(LocalDateTime.now());
+                familyRepository.save(family);
+                log.info("Family created: " + family.getId() + " and associated with study " + study.getId());
+            } else {
+                log.info("Family already exists: " + family.getId() + " in study " + study.getId());
+            }
         }
     }
 }
